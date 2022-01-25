@@ -29,18 +29,9 @@ module Arproxy
 
     def enable!
       @config.adapter_class.class_eval do
-        if instance_method(:execute).parameters.any? { |kind, name| kind == :key && name == :async }
-          # ActiveRecord 7.0.0+ with MySQL
-          # ref. https://github.com/rails/rails/blob/v7.0.0/activerecord/lib/active_record/connection_adapters/mysql/database_statements.rb#L43
-          def execute_with_arproxy(sql, name=nil, **kwargs)
-            ::Arproxy.proxy_chain.connection = self
-            ::Arproxy.proxy_chain.head.execute sql, name, **kwargs
-          end
-        else
-          def execute_with_arproxy(sql, name=nil)
-            ::Arproxy.proxy_chain.connection = self
-            ::Arproxy.proxy_chain.head.execute sql, name
-          end
+        def execute_with_arproxy(sql, name=nil, **kwargs)
+          ::Arproxy.proxy_chain.connection = self
+          ::Arproxy.proxy_chain.head.execute sql, name, **kwargs
         end
         alias_method :execute_without_arproxy, :execute
         alias_method :execute, :execute_with_arproxy
